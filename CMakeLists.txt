@@ -11,7 +11,7 @@ ELSE()
     MESSAGE(FATAL_ERROR "Could not find dynamind. Maybe not installed ?")
 ENDIF()
 
-FIND_PACKAGE(Qt4 COMPONENTS QtCore QtGui REQUIRED)
+FIND_PACKAGE(Qt4 COMPONENTS QtCore QtGui QtXml REQUIRED)
 
 
 INCLUDE(${QT_USE_FILE})

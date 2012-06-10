@@ -49,9 +49,6 @@ void QGisDynaMind::initGui()
     connect(mAction, SIGNAL(activated()), this, SLOT(startDynaMind()));
     mIface->addToolBarIcon(mAction);
     mIface->addPluginToMenu(tr("&DynaMind"), mAction);
-    QMap<QString, QgsMapLayer*> list = QgsMapLayerRegistry::instance()->mapLayers();
-
-
     dm =  new DynaMindMainWindow();
     dm->registerNativeDll("/home/c8451045/Documents/DynaMind-QGIS/build/debug/src/QGis-DynaMindModules/libqgis-dynamind-modules.so");
 }
