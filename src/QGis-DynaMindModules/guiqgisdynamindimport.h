@@ -6,6 +6,7 @@
 #define CORE_EXPORT  __attribute__((dllexport))
 #define GUI_EXPORT __attribute__((dllexport))
 
+class QGisDynaMindImport;
 namespace DM {
     class Module;
 }
@@ -24,6 +25,7 @@ public:
     
 private:
     Ui::GUIQGisDynaMindImport *ui;
+   GUIQGisDynaMindImport * module;
 };
 
 #endif // GUIQGISDYNAMINDIMPORT_H

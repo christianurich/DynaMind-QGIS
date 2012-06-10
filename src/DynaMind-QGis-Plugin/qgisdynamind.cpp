@@ -53,7 +53,7 @@ void QGisDynaMind::initGui()
 
 
     dm =  new DynaMindMainWindow();
-    dm->registerNativeDll("/home/c8451045/Documents/QGis-DynaMind/build/debug/libqgis-dynamind-modules.so");
+    dm->registerNativeDll("/home/c8451045/Documents/DynaMind-QGIS/build/debug/src/QGis-DynaMindModules/libqgis-dynamind-modules.so");
 }
 void QGisDynaMind::unload()
 {

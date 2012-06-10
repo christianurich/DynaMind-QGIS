@@ -3,9 +3,6 @@
 #include "qgisplugin.h"
 
 #include <dmmodule.h>
-
-
-
 class DM_HELPER_DLL_EXPORT QGisDynaMindImport : public  DM::Module {
     DM_DECLARE_NODE (QGisDynaMindImport)
 private:

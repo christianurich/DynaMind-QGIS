@@ -4,7 +4,6 @@
 #include "guiqgisdynamindimport.h"
 
 
-
 DM_DECLARE_NODE_NAME(QGisDynaMindImport, QGIS)
 QGisDynaMindImport::QGisDynaMindImport()
 {
