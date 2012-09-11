@@ -50,7 +50,7 @@ void QGisDynaMind::initGui()
     mIface->addToolBarIcon(mAction);
     mIface->addPluginToMenu(tr("&DynaMind"), mAction);
     dm =  new DynaMindMainWindow();
-    dm->registerNativeDll("/home/c8451045/Documents/DynaMind-ToolBox/build/debug/output/qgis-plugin/libqgis-dynamind-modules.so");
+    //dm->registerNativeDll("/home/c8451045/Documents/DynaMind-ToolBox/build/debug/output/qgis-plugin/libqgis-dynamind-modules.so");
 }
 void QGisDynaMind::unload()
 {

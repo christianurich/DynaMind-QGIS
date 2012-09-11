@@ -8,7 +8,6 @@
 #include <qgsvectorlayer.h>
 #include <qgsgeometry.h>
 
-#include "ogrsf_frmts.h"
 
 DM_DECLARE_NODE_NAME(QGISDynaMindExport, QGIS)
 
@@ -37,7 +36,44 @@ void QGISDynaMindExport::run() {
     for (int id = 0; id < vectorLayer->featureCount(); id++ ) {
         vectorLayer->deleteFeature(id);
     }
+    QgsAttributeList alist = vectorLayer->pendingAllAttributesList();
+    foreach (int id, alist) {
+        //vectorLayer->deleteAttribute(id);
+    }
+
+    //Create Attribute Tables
     std::vector<std::string> uuids = sys->getUUIDsOfComponentsInView(*v);
+    std::map<std::string, int> attrtypes;
+    foreach (std::string uuid, uuids) {
+        Component * c = sys->getComponent(uuid);
+        std::map<std::string, Attribute*> amap = c->getAllAttributes();
+        for (std::map<std::string, Attribute*>::const_iterator it = amap.begin(); it != amap.end(); it++) {
+            Attribute * attr = c->getAttribute(it->first);
+            switch (attr->getType()) {
+            case DM::Attribute::DOUBLE:
+                if (attrtypes[it->first] == 0 )
+                    attrtypes[it->first] = DM::Attribute::DOUBLE;
+                break;
+            case DM::Attribute::STRING:
+                attrtypes[it->first] = DM::Attribute::STRING;
+                break;
+            }
+        }
+    }
+
+    vectorLayer->addAttribute(QgsField("id", QVariant::Int));
+    for (std::map<std::string, int>::const_iterator it = attrtypes.begin(); it != attrtypes.end(); it++) {
+        if (it->second == DM::Attribute::DOUBLE)
+            vectorLayer->addAttribute(QgsField(QString::fromStdString(it->first), QVariant::Double));
+        if (it->second == DM::Attribute::STRING)
+            vectorLayer->addAttribute(QgsField(QString::fromStdString(it->first), QVariant::String));
+    }
+    std::map<std::string, int> attrIndex;
+    alist = vectorLayer->pendingAllAttributesList();
+    foreach (int id, alist) {
+        attrIndex[vectorLayer->attributeAlias(id).toStdString()] = id;
+    }
+
     if (v->getType() == DM::FACE) {
         foreach (std::string uuid, uuids) {
             QgsFeature feature;
@@ -54,7 +90,19 @@ void QGISDynaMindExport::run() {
             vpoly.push_back(poly);
             QgsPolygon pol(vpoly);
             feature.setGeometry(QgsGeometry::fromPolygon(pol));
-            std::cout << "Add feature" << std::endl;
+            std::map<std::string, Attribute*> amap = f->getAllAttributes();
+            for (std::map<std::string, Attribute*>::const_iterator it = amap.begin(); it != amap.end(); it++) {
+                Attribute * attr = f->getAttribute(it->first);
+
+                switch (attrtypes[it->first]) {
+                case DM::Attribute::DOUBLE:
+                    feature.addAttribute(attrIndex[it->first], attr->getDouble());
+                    break;
+                case DM::Attribute::STRING:
+                    feature.addAttribute(attrIndex[it->first], QString::fromStdString(attr->getString()));
+                    break;
+                }
+            }
             vectorLayer->addFeature(feature);
         }
 
