@@ -33,6 +33,7 @@
 
 class QAction;
 class DynaMindMainWindow;
+
 class QGisDynaMind : public QObject, public QgisPlugin
 {
     Q_OBJECT

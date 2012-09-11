@@ -5,7 +5,7 @@ include_directories(/home/c8451045/programms/Quantum-GIS/src/plugins)
 include_directories(/home/c8451045/programms/Quantum-GIS/src/gui)
 include_directories(/home/c8451045/programms/Quantum-GIS/src/core)
 
-SET(MOC_MODULE_FILES guiqgisdynamindimport.h)
+SET(MOC_MODULE_FILES guiqgisdynamindimport.h guiqgisdynamindexport.h)
 
 
 

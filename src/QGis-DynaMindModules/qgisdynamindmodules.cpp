@@ -28,8 +28,9 @@
 #include "dmnodefactory.h"
 #include "dmmoduleregistry.h"
 #include "qgisdynamindimport.h"
+#include "qgisdynamindexport.h"
 
 extern "C" void DM_HELPER_DLL_EXPORT  registerModules(DM::ModuleRegistry *registry) {
      registry->addNodeFactory(new DM::NodeFactory<QGisDynaMindImport>());
-
+     registry->addNodeFactory(new DM::NodeFactory<QGISDynaMindExport>());
 }

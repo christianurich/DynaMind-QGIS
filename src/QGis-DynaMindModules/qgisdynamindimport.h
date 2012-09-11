@@ -4,6 +4,9 @@
 
 #include <dmmodule.h>
 #include <dm.h>
+
+class QgsFeature;
+class QgsVectorLayer;
 class DM_HELPER_DLL_EXPORT QGisDynaMindImport : public  DM::Module {
     DM_DECLARE_NODE (QGisDynaMindImport)
 private:
@@ -20,6 +23,13 @@ public:
     void run();
     bool createInputDialog();
     void setLayer(std::string name);
+
+    void appendAttributes(DM::Component * cmp, QgsVectorLayer*  vectorLayer, QgsFeature *feature);
+    DM::Component * loadNode(DM::System * sys,  QgsFeature *feature);
+    DM::Component * loadFace(DM::System * sys,  QgsFeature *feature);
+    DM::Component * loadEdge(DM::System * sys,  QgsFeature *feature);
+
+
     void init();
 };
 
