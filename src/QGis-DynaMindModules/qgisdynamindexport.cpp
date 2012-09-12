@@ -7,6 +7,7 @@
 #include <qgsmaplayer.h>
 #include <qgsvectorlayer.h>
 #include <qgsgeometry.h>
+#include <qgsvectordataprovider.h>
 
 
 DM_DECLARE_NODE_NAME(QGISDynaMindExport, QGIS)
@@ -30,20 +31,15 @@ void QGISDynaMindExport::run() {
     DM::View * v = sys->getViewDefinition(dataname);
 
     QgsMapLayer * layer = QgsMapLayerRegistry::instance()->mapLayer(QString::fromStdString(this->qgisname));
-
     QgsVectorLayer * vectorLayer= (QgsVectorLayer*) layer;
 
     for (int id = 0; id < vectorLayer->featureCount(); id++ ) {
         vectorLayer->deleteFeature(id);
     }
-    QgsAttributeList alist = vectorLayer->pendingAllAttributesList();
-    foreach (int id, alist) {
-        //vectorLayer->deleteAttribute(id);
-    }
 
     //Create Attribute Tables
     std::vector<std::string> uuids = sys->getUUIDsOfComponentsInView(*v);
-    std::map<std::string, int> attrtypes;
+    QMap<std::string, int> attrTypes;
     foreach (std::string uuid, uuids) {
         Component * c = sys->getComponent(uuid);
         std::map<std::string, Attribute*> amap = c->getAllAttributes();
@@ -51,61 +47,104 @@ void QGISDynaMindExport::run() {
             Attribute * attr = c->getAttribute(it->first);
             switch (attr->getType()) {
             case DM::Attribute::DOUBLE:
-                if (attrtypes[it->first] == 0 )
-                    attrtypes[it->first] = DM::Attribute::DOUBLE;
+                if (attrTypes[it->first] == 0 )
+                    attrTypes[it->first] = DM::Attribute::DOUBLE;
                 break;
             case DM::Attribute::STRING:
-                attrtypes[it->first] = DM::Attribute::STRING;
+                attrTypes[it->first] = DM::Attribute::STRING;
                 break;
             }
         }
     }
+    QList<QgsField> attributes;
+    QMap<QString, int> attrIndex = vectorLayer->dataProvider()->fieldNameMap();
+    foreach(std::string key, attrTypes.keys()) {
+        if (attrIndex.contains((QString::fromStdString(key))))
+            continue;
+        if (attrTypes[key] == DM::Attribute::DOUBLE) {
+            attributes.push_back(QgsField(QString::fromStdString(key), QVariant::Double));
 
-    vectorLayer->addAttribute(QgsField("id", QVariant::Int));
-    for (std::map<std::string, int>::const_iterator it = attrtypes.begin(); it != attrtypes.end(); it++) {
-        if (it->second == DM::Attribute::DOUBLE)
-            vectorLayer->addAttribute(QgsField(QString::fromStdString(it->first), QVariant::Double));
-        if (it->second == DM::Attribute::STRING)
-            vectorLayer->addAttribute(QgsField(QString::fromStdString(it->first), QVariant::String));
+        }
+        if (attrTypes[key]  == DM::Attribute::STRING) {
+            attributes.push_back(QgsField(QString::fromStdString(key), QVariant::String));
+        }
     }
-    std::map<std::string, int> attrIndex;
-    alist = vectorLayer->pendingAllAttributesList();
-    foreach (int id, alist) {
-        attrIndex[vectorLayer->attributeAlias(id).toStdString()] = id;
-    }
+    vectorLayer->dataProvider()->addAttributes(attributes);
+    vectorLayer->updateFieldMap();
 
-    if (v->getType() == DM::FACE) {
-        foreach (std::string uuid, uuids) {
-            QgsFeature feature;
-            QVector<QgsPoint> points;
-            DM::Face * f = sys->getFace(uuid);
-            std::vector<std::string> nodeuuids = f->getNodes();
-            foreach (std::string uup, nodeuuids) {
-                DM::Node * n = sys->getNode(uup);
-                QgsPoint p (n->getX(), n->getY());
-                points.push_back(p);
-            }
-            QgsPolyline poly = QgsPolyline(points);
-            QVector<QgsPolyline> vpoly;
-            vpoly.push_back(poly);
-            QgsPolygon pol(vpoly);
-            feature.setGeometry(QgsGeometry::fromPolygon(pol));
-            std::map<std::string, Attribute*> amap = f->getAllAttributes();
-            for (std::map<std::string, Attribute*>::const_iterator it = amap.begin(); it != amap.end(); it++) {
-                Attribute * attr = f->getAttribute(it->first);
+    attrIndex = vectorLayer->dataProvider()->fieldNameMap();
 
-                switch (attrtypes[it->first]) {
-                case DM::Attribute::DOUBLE:
-                    feature.addAttribute(attrIndex[it->first], attr->getDouble());
-                    break;
-                case DM::Attribute::STRING:
-                    feature.addAttribute(attrIndex[it->first], QString::fromStdString(attr->getString()));
-                    break;
-                }
-            }
-            vectorLayer->addFeature(feature);
+    foreach (std::string uuid, uuids) {
+        QgsFeature feature;
+        if (v->getType() == DM::NODE) {
+            if (!createNode(&feature, uuid, sys))
+                continue;
+        }
+        if (v->getType() == DM::EDGE) {
+            if (!createEdge(&feature, uuid, sys))
+                continue;
+        }
+        if (v->getType() == DM::FACE) {
+            if (!createFace(&feature, uuid, sys))
+                continue;
         }
 
+        appenAttributes(&feature, sys->getComponent(uuid), attrIndex, attrTypes);
+        vectorLayer->addFeature(feature);
+    }
+}
+bool QGISDynaMindExport::createFace(QgsFeature * feature, std::string uuid, DM::System * sys) {
+    QVector<QgsPoint> points;
+    DM::Face * f = sys->getFace(uuid);
+    std::vector<std::string> nodeuuids = f->getNodes();
+    foreach (std::string uup, nodeuuids) {
+        DM::Node * n = sys->getNode(uup);
+        QgsPoint p (n->getX(), n->getY());
+        points.push_back(p);
+    }
+    QgsPolyline poly = QgsPolyline(points);
+    QVector<QgsPolyline> vpoly;
+    vpoly.push_back(poly);
+    QgsPolygon pol(vpoly);
+    feature->setGeometry(QgsGeometry::fromPolygon(pol));
+
+    return true;
+}
+
+bool QGISDynaMindExport::createEdge(QgsFeature * feature, std::string uuid, DM::System * sys) {
+    QVector<QgsPoint> points;
+    DM::Edge * e = sys->getEdge(uuid);
+    DM::Node * n1 = sys->getNode(e->getStartpointName());
+    DM::Node * n2 = sys->getNode(e->getEndpointName());
+    QgsPoint p1 (n1->getX(), n1->getY());
+    QgsPoint p2 (n2->getX(), n2->getY());
+    points.push_back(p1);
+    points.push_back(p2);
+    QgsPolyline poly = QgsPolyline(points);
+    feature->setGeometry(QgsGeometry::fromPolyline(poly));
+    return true;
+}
+
+bool QGISDynaMindExport::createNode(QgsFeature * feature, std::string uuid, DM::System * sys) {
+    DM::Node * n = sys->getNode(uuid);
+    QgsPoint p (n->getX(), n->getY());
+    feature->setGeometry(QgsGeometry::fromPoint(p));
+    return true;
+}
+
+
+void QGISDynaMindExport::appenAttributes(QgsFeature * feature, Component * cmp, QMap<QString, int> & attrIndex, QMap<std::string, int> & attrTypes) {
+    std::map<std::string, Attribute*> amap = cmp->getAllAttributes();
+    for (std::map<std::string, Attribute*>::const_iterator it = amap.begin(); it != amap.end(); it++) {
+        Attribute * attr = cmp->getAttribute(it->first);
+        switch (attrTypes[it->first]) {
+        case DM::Attribute::DOUBLE:
+            feature->addAttribute(attrIndex[QString::fromStdString(it->first)], attr->getDouble());
+            break;
+        case DM::Attribute::STRING:
+            feature->addAttribute(attrIndex[QString::fromStdString(it->first)], QString::fromStdString(attr->getString()));
+            break;
+        }
     }
 }
 
