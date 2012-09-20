@@ -30,7 +30,11 @@
 #include "qgisinterface.h"
 #include "dynamindmainwindow.h"
 #include "qgsmaplayerregistry.h"
+#include "guiprefdynamind.h"
+#include <QDir>
 #include <QAction>
+#include <QApplication>
+#include <QSettings>
 
 #ifdef WIN32
 #define QGISEXTERN extern "C" __declspec( dllexport )
@@ -45,27 +49,47 @@ QGisDynaMind::~QGisDynaMind()
 }
 void QGisDynaMind::initGui()
 {
-    mAction = new QAction(tr("&StartDynaMind"), this);
-    connect(mAction, SIGNAL(activated()), this, SLOT(startDynaMind()));
-    mIface->addToolBarIcon(mAction);
-    mIface->addPluginToMenu(tr("&DynaMind"), mAction);
-    dm =  new DynaMindMainWindow();
-    //dm->registerNativeDll("/home/c8451045/Documents/DynaMind-ToolBox/build/debug/output/qgis-plugin/libqgis-dynamind-modules.so");
+    Q_INIT_RESOURCE(icons);
+
+    mAction_start = new QAction(tr("&Show"), this);
+    //mAction_start->setIcon(QIcon(":/resources/dynamind-icon.png"));
+    connect(mAction_start, SIGNAL(activated()), this, SLOT(startDynaMind()));
+    mAction_settings = new QAction(tr("&Settings"), this);
+    connect(mAction_settings, SIGNAL(activated()), this, SLOT(settingsDynaMind()));
+    mIface->addToolBarIcon(mAction_start);
+    mIface->addPluginToMenu(tr("&DynaMind"), mAction_start);
+    mIface->addPluginToMenu(tr("&DynaMind"), mAction_settings);
+    dm = 0;
 }
 void QGisDynaMind::unload()
 {
-    mIface->removeToolBarIcon(mAction);
-    mIface->removePluginMenu(tr("&DynaMind"), mAction);
-    delete mAction;
+    mIface->removeToolBarIcon(mAction_start);
+    mIface->removePluginMenu(tr("&DynaMind"), mAction_start);
+    mIface->removePluginMenu(tr("&DynaMind"), mAction_settings);
+    delete mAction_start;
+    delete mAction_settings;
 }
 
 void QGisDynaMind::startDynaMind()
 {
-
+    if (!dm) {
+        QSettings settingsDynaMind("IUT", "DYNAMIND");
+        QString rpath = settingsDynaMind.value("ROOTPATH").toString();
+        QStringList libs = QApplication::libraryPaths();
+        libs.push_back(rpath);
+        QString tmp_path = QDir::currentPath();
+        QDir::setCurrent(rpath);
+        dm =  new DynaMindMainWindow();
+        QDir::setCurrent(tmp_path);
+    }
     qWarning("start DynaMind");
-
     dm->createMainWindow();
+}
 
+void QGisDynaMind::settingsDynaMind()
+{
+    GUIPrefDynaMind * w = new GUIPrefDynaMind();
+    w->show();
 }
 QGISEXTERN QgisPlugin* classFactory(QgisInterface* iface)
 {
@@ -77,11 +101,11 @@ QGISEXTERN QString name()
 }
 QGISEXTERN QString description()
 {
-    return "Integrates DynaMind in QGis";
+    return "";
 }
 QGISEXTERN QString version()
 {
-    return "0.00001";
+    return "0.1";
 }
 // Return the type (either UI or MapLayer plugin)
 QGISEXTERN int type()
@@ -89,9 +113,10 @@ QGISEXTERN int type()
     return QgisPlugin::UI;
 }
 // Delete ourself
-QGISEXTERN void unload(QgisPlugin* theQgsPointConverterPluginPointer)
+QGISEXTERN void unload(QgisPlugin* plugin)
 {
-    delete theQgsPointConverterPluginPointer;
+    delete plugin;
 }
+
 
 

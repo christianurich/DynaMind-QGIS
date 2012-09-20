@@ -41,15 +41,17 @@ public:
     QGisDynaMind(QgisInterface* iface);
     ~QGisDynaMind();
 
-
+public slots:
     void initGui();
     void unload();
 private:
     QgisInterface* mIface;
     DynaMindMainWindow * dm;
-    QAction* mAction;
+    QAction* mAction_start;
+    QAction* mAction_settings;
     private slots:
     void startDynaMind();
+    void settingsDynaMind();
 
 };
 
