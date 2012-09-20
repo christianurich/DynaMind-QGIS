@@ -1,5 +1,6 @@
 file(GLOB MODULE_CPPS *.cpp)
 
+
 include_directories(.)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/../../../DynaMind-Gui/src/libdynamind-gui)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -8,13 +9,22 @@ ADD_DEFINITIONS("-DCORE_EXPORT=${DLLIMPORT}")
 ADD_DEFINITIONS("-DGUI_EXPORT=${DLLIMPORT}")
 ADD_DEFINITIONS("-DPYTHON_EXPORT=${DLLIMPORT}")
 ADD_DEFINITIONS("-DANALYSIS_EXPORT=${DLLIMPORT}")
-set(MOC_FILES  qgisdynamind.h)
 
-QT4_WRAP_CPP(MODULE_CPPS ${MOC_FILES})
+FILE(GLOB CPP_GUI_FILES *.cpp)
+FILE(GLOB UI_FILES *.ui)
+QT4_ADD_RESOURCES(qgisdynamindplugin icons.qrc)
+
+QT4_WRAP_UI(CPP_GUI_FILES ${UI_FILES})
+
+#set(MOC_FILES  qgisdynamind.h)
+
+#QT4_WRAP_CPP(MODULE_CPPS ${MOC_FILES})
 
 
 
 add_library(qgisdynamindplugin SHARED  ${CPP_GUI_FILES} ${MODULE_CPPS})
+
+SET_TARGET_PROPERTIES(qgisdynamindplugin PROPERTIES AUTOMOC TRUE)
 
 target_link_libraries(qgisdynamindplugin dynamindtoolbox dynamindcore dynamindgui  ${QGIS_LIBRARIES} ${QT_LIBRARIES})
 
