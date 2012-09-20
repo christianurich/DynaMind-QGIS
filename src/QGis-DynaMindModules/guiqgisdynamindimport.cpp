@@ -21,6 +21,9 @@ GUIQGisDynaMindImport::GUIQGisDynaMindImport(DM::Module * m, QWidget *parent) :
 
     ui->lineEdit->setText(QString::fromStdString(this->module->getParameterAsString("DataName")));
 
+    bool append = m->getParameter<bool>("appendToStream");
+    ui->checkBox_append->setChecked(append);
+
 }
 
 GUIQGisDynaMindImport::~GUIQGisDynaMindImport()
@@ -43,7 +46,11 @@ void GUIQGisDynaMindImport::accept() {
         QDialog::accept();
         return;
     }
-
+    if (ui->checkBox_append->isChecked()) {
+        module->setParameterNative<bool>("appendToStream", true);
+    } else {
+        module->setParameterNative<bool>("appendToStream", false);
+    }
     std::string selectedLayer = ui->comboBox->currentText().toStdString();
     module->setLayer(selectedLayer);
 

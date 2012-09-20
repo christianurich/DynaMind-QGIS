@@ -17,6 +17,7 @@ private:
         bool isEdge;
         bool isFace;
         DM::View v;
+        bool appendToStream;
 
 public:
     QGisDynaMindImport();

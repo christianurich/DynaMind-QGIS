@@ -51,6 +51,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="checkBox_append">
+     <property name="text">
+      <string>Append data to stream</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>

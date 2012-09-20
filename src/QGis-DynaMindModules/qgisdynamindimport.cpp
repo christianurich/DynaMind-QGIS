@@ -13,11 +13,16 @@ QGisDynaMindImport::QGisDynaMindImport()
 {
     this->currentLayer = "";
     this->oldLayer = "";
-    this->addParameter("CurrentLayer", DM::STRING, &this->currentLayer);
-    this->addParameter("DataName", DM::STRING, &this->dataname);
+
     this->isNode = false;
     this->isEdge = false;
     this->isFace = false;
+    this->appendToStream = false;
+
+    this->addParameter("CurrentLayer", DM::STRING, &this->currentLayer);
+    this->addParameter("DataName", DM::STRING, &this->dataname);
+    this->addParameter("appendToStream", DM::BOOL, &this->appendToStream);
+
 }
 
 void QGisDynaMindImport::run() {
@@ -106,7 +111,11 @@ void QGisDynaMindImport::init() {
     foreach (int id, alist) {
         v.addAttribute(vectorLayer->attributeDisplayName(id).toStdString());
     }
+
+
     std::vector<DM::View> data;
+    if(this->appendToStream)
+        data.push_back(DM::View("dummy", DM::SUBSYSTEM, DM::MODIFY));
     data.push_back(v);
     this->addData("QGisIn", data);
 }

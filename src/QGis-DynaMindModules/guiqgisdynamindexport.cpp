@@ -22,7 +22,6 @@ GUIQGISDynaMindExport::GUIQGISDynaMindExport(DM::Module * m, QWidget *parent) :
     foreach (QString maps, layers.keys()) {
         QgsMapLayer * layer = QgsMapLayerRegistry::instance()->mapLayer(maps);
 
-        //QgsVectorLayer * vectorLayer= (QgsVectorLayer*) layer;
         if (layer->isEditable())
             ui->comboBox->addItem(maps);
     }
