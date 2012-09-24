@@ -16,7 +16,14 @@ GUIQGisDynaMindImport::GUIQGisDynaMindImport(DM::Module * m, QWidget *parent) :
     QMap<QString, QgsMapLayer*> layers = QgsMapLayerRegistry::instance()->mapLayers();
     ui->comboBox->clear();
     foreach (QString maps, layers.keys()) {
+        maps.remove(maps.length()-17, 17);
         ui->comboBox->addItem(maps);
+    }
+    std::string nameofLayer = m->getParameter<std::string>("CurrentLayer");
+    if (!nameofLayer.empty()) {
+        int index = ui->comboBox->findText(QString::fromStdString(nameofLayer));
+        if (index > -1)
+            ui->comboBox->setCurrentIndex(index);
     }
 
     ui->lineEdit->setText(QString::fromStdString(this->module->getParameterAsString("DataName")));

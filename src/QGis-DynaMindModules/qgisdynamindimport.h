@@ -4,9 +4,13 @@
 
 #include <dmmodule.h>
 #include <dm.h>
+#define CORE_EXPORT  __attribute__((dllexport))
+#define GUI_EXPORT __attribute__((dllexport))
 
+#include <qgsvectorlayer.h>
 class QgsFeature;
 class QgsVectorLayer;
+
 class DM_HELPER_DLL_EXPORT QGisDynaMindImport : public  DM::Module {
     DM_DECLARE_NODE (QGisDynaMindImport)
 private:
@@ -18,6 +22,8 @@ private:
         bool isFace;
         DM::View v;
         bool appendToStream;
+        QgsAttributeList attrList;
+        QString findMap(QString mapName);
 
 public:
     QGisDynaMindImport();

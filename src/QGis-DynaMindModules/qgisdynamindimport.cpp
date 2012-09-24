@@ -9,6 +9,19 @@
 #include <qgsgeometry.h>
 
 DM_DECLARE_NODE_NAME(QGisDynaMindImport, QGIS)
+QString QGisDynaMindImport::findMap(QString mapName)
+{
+    QMap<QString, QgsMapLayer*> layers = QgsMapLayerRegistry::instance()->mapLayers();
+    foreach (QString maps, layers.keys()) {
+        QString maps_tmp = maps;
+        maps.remove(maps.length()-17, 17);
+        if (maps.compare(mapName) == 0) {
+            return maps_tmp;
+        }
+    }
+    return "";
+}
+
 QGisDynaMindImport::QGisDynaMindImport()
 {
     this->currentLayer = "";
@@ -29,11 +42,18 @@ void QGisDynaMindImport::run() {
     DM::System * sys;
     sys = this->getData("QGisIn");
 
-    QgsMapLayer * layer = QgsMapLayerRegistry::instance()->mapLayer(QString::fromStdString(this->currentLayer));
+    QString mapname = this->findMap(QString::fromStdString(this->currentLayer));
+
+
+    if (mapname.isEmpty()) {
+        DM::Logger(DM::Debug) << "map " << this->currentLayer << "does not exist!";
+        return;
+    }
+    QgsMapLayer * layer = QgsMapLayerRegistry::instance()->mapLayer(mapname);
     QgsVectorLayer * vectorLayer= (QgsVectorLayer*) layer;
-    for (int id = 0; id < vectorLayer->featureCount(); id++ ) {
+        for (int id = 0; id < vectorLayer->featureCount(); id++ ) {
         QgsFeature feature;
-        vectorLayer->featureAtId(id, feature);
+        vectorLayer->dataProvider()->featureAtId(id, feature, true, attrList);
         DM::Component * cmp = 0;
         if (this->isNode) {
             cmp = this->loadNode(sys, &feature);
@@ -44,7 +64,8 @@ void QGisDynaMindImport::run() {
         if (this->isFace) {
             cmp = this->loadFace(sys, &feature);
         }
-        this->appendAttributes(cmp, vectorLayer, &feature);
+        if (cmp)
+            this->appendAttributes(cmp, vectorLayer, &feature);
     }
 
     DM::Logger(DM::Debug) << "Number of added Elements " << sys->getUUIDsOfComponentsInView(v).size();
@@ -80,8 +101,19 @@ void QGisDynaMindImport::init() {
     if (currentLayer.empty())
         return;
 
+    QString mapname = this->findMap(QString::fromStdString(this->currentLayer));
+    if (mapname.isEmpty()) {
+        DM::Logger(DM::Debug) << "map " << this->currentLayer << "does not exist!";
+        return;
+    }
     QMap<QString, QgsMapLayer*> list = QgsMapLayerRegistry::instance()->mapLayers();
-    QgsMapLayer * layer = QgsMapLayerRegistry::instance()->mapLayer(QString::fromStdString(this->currentLayer));
+    QgsMapLayer * layer = QgsMapLayerRegistry::instance()->mapLayer(mapname);
+    if (!layer) {
+        DM::Logger(DM::Error) << "No QGIS instance opened";
+        return;
+    }
+
+    attrList.clear();
     QgsVectorLayer * vectorLayer= (QgsVectorLayer*) layer;
 
 
@@ -107,8 +139,8 @@ void QGisDynaMindImport::init() {
         this->isEdge = false;
         this->isFace = true;
     }
-    QgsAttributeList alist = vectorLayer->pendingAllAttributesList();
-    foreach (int id, alist) {
+    attrList = vectorLayer->pendingAllAttributesList();
+    foreach (int id, attrList) {
         v.addAttribute(vectorLayer->attributeDisplayName(id).toStdString());
     }
 
@@ -129,7 +161,11 @@ bool QGisDynaMindImport::createInputDialog() {
 
 DM::Component *QGisDynaMindImport::loadEdge(DM::System *sys, QgsFeature *feature)
 {
+    if (!feature)
+        return 0;
     QgsGeometry * geo = feature->geometry();
+    if (!geo)
+        return 0;
     QgsPolyline pol= geo->asPolyline();
     DM::Node * prev = 0;
     DM::Node * cur = 0;
@@ -145,7 +181,11 @@ DM::Component *QGisDynaMindImport::loadEdge(DM::System *sys, QgsFeature *feature
 }
 DM::Component *QGisDynaMindImport::loadNode(DM::System *sys, QgsFeature *feature)
 {
+    if (!feature)
+        return 0;
     QgsGeometry * geo = feature->geometry();
+    if (!geo)
+        return 0;
     QgsPoint p= geo->asPoint();
     DM::Node * n = sys->addNode(p.x(), p.y(), 0, v);
     return n;
@@ -153,7 +193,11 @@ DM::Component *QGisDynaMindImport::loadNode(DM::System *sys, QgsFeature *feature
 
 DM::Component *QGisDynaMindImport::loadFace(DM::System *sys, QgsFeature *feature)
 {
+    if (!feature)
+        return 0;
     QgsGeometry * geo = feature->geometry();
+    if (!geo)
+        return 0;
     QgsPolygon pol= geo->asPolygon();
     DM::Face * f  = 0;
     std::vector<DM::Node *> nodes;
@@ -165,7 +209,7 @@ DM::Component *QGisDynaMindImport::loadFace(DM::System *sys, QgsFeature *feature
             }
         }
     }
-    if (nodes.size() < 3)
+    if (nodes.size() < 4)
         return 0;
     f = sys->addFace(nodes, v);
 
