@@ -51,9 +51,10 @@ void QGisDynaMindImport::run() {
     }
     QgsMapLayer * layer = QgsMapLayerRegistry::instance()->mapLayer(mapname);
     QgsVectorLayer * vectorLayer= (QgsVectorLayer*) layer;
-        for (int id = 0; id < vectorLayer->featureCount(); id++ ) {
-        QgsFeature feature;
-        vectorLayer->dataProvider()->featureAtId(id, feature, true, attrList);
+    QgsFeature feature;
+    vectorLayer->select( vectorLayer->pendingAllAttributesList(), QgsRectangle(), true, false );
+
+    while ( vectorLayer->nextFeature( feature ) ){
         DM::Component * cmp = 0;
         if (this->isNode) {
             cmp = this->loadNode(sys, &feature);
@@ -198,7 +199,14 @@ DM::Component *QGisDynaMindImport::loadFace(DM::System *sys, QgsFeature *feature
     QgsGeometry * geo = feature->geometry();
     if (!geo)
         return 0;
+
     QgsPolygon pol= geo->asPolygon();
+    if (geo->isMultipart()) {
+        QgsMultiPolygon mPol = geo->asMultiPolygon();
+        if (mPol.size() > 0)
+            pol = mPol[0];
+    }
+
     DM::Face * f  = 0;
     std::vector<DM::Node *> nodes;
     foreach (QVector<QgsPoint> vpol,pol ) {
