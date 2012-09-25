@@ -35,6 +35,7 @@ public:
     DM::Component * loadNode(DM::System * sys,  QgsFeature *feature);
     DM::Component * loadFace(DM::System * sys,  QgsFeature *feature);
     DM::Component * loadEdge(DM::System * sys,  QgsFeature *feature);
+    std::string getHelpUrl();
 
 
     void init();

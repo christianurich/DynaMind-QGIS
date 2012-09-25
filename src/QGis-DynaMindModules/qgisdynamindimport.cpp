@@ -180,6 +180,11 @@ DM::Component *QGisDynaMindImport::loadEdge(DM::System *sys, QgsFeature *feature
     }
     return e;
 }
+
+string QGisDynaMindImport::getHelpUrl()
+{
+    return "https://docs.google.com/document/pub?id=1TERqD9FCFGwnVCNruSAPsxUtoIDUN9VENFl20j8V5dI";
+}
 DM::Component *QGisDynaMindImport::loadNode(DM::System *sys, QgsFeature *feature)
 {
     if (!feature)
