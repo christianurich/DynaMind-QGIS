@@ -73,7 +73,7 @@ void QGISDynaMindExport::run() {
     vectorLayer->updateFieldMap();
 
     attrIndex = vectorLayer->dataProvider()->fieldNameMap();
-
+    QgsFeatureList fl;
     foreach (std::string uuid, uuids) {
         QgsFeature feature;
         if (v->getType() == DM::NODE) {
@@ -90,8 +90,9 @@ void QGISDynaMindExport::run() {
         }
 
         appenAttributes(&feature, sys->getComponent(uuid), attrIndex, attrTypes);
-        vectorLayer->addFeature(feature);
-    }
+        fl.push_back(feature);
+    }    
+    vectorLayer->addFeatures(fl);
 }
 bool QGISDynaMindExport::createFace(QgsFeature * feature, std::string uuid, DM::System * sys) {
     QVector<QgsPoint> points;
