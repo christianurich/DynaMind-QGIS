@@ -168,6 +168,15 @@ DM::Component *QGisDynaMindImport::loadEdge(DM::System *sys, QgsFeature *feature
     if (!geo)
         return 0;
     QgsPolyline pol= geo->asPolyline();
+
+    if (geo->isMultipart()) {
+        QgsMultiPolyline mpol = geo->asMultiPolyline();
+        if (mpol.size() > 0) {
+            pol = mpol [0];
+        }
+    }
+
+
     DM::Node * prev = 0;
     DM::Node * cur = 0;
     DM::Edge * e  = 0;
