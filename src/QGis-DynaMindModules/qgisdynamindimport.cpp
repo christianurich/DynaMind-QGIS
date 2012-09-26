@@ -31,10 +31,13 @@ QGisDynaMindImport::QGisDynaMindImport()
     this->isEdge = false;
     this->isFace = false;
     this->appendToStream = false;
+    coorindateSystem = 31257;
 
     this->addParameter("CurrentLayer", DM::STRING, &this->currentLayer);
     this->addParameter("DataName", DM::STRING, &this->dataname);
     this->addParameter("appendToStream", DM::BOOL, &this->appendToStream);
+    this->addParameter("CoordinateSystem", DM::LONG, &this->coorindateSystem);
+
 
 }
 
@@ -54,7 +57,12 @@ void QGisDynaMindImport::run() {
     QgsFeature feature;
     vectorLayer->select( vectorLayer->pendingAllAttributesList(), QgsRectangle(), true, false );
 
+    QgsCoordinateReferenceSystem destCRS = QgsCoordinateReferenceSystem(this->coorindateSystem);
+    QgsCoordinateTransform* ct = 0;
+    ct = new QgsCoordinateTransform( vectorLayer->crs(), destCRS );
+
     while ( vectorLayer->nextFeature( feature ) ){
+        feature.geometry()->transform(*ct);
         DM::Component * cmp = 0;
         if (this->isNode) {
             cmp = this->loadNode(sys, &feature);
@@ -69,6 +77,7 @@ void QGisDynaMindImport::run() {
             this->appendAttributes(cmp, vectorLayer, &feature);
     }
 
+    delete ct;
     DM::Logger(DM::Debug) << "Number of added Elements " << sys->getUUIDsOfComponentsInView(v).size();
 
 }
@@ -213,7 +222,6 @@ DM::Component *QGisDynaMindImport::loadFace(DM::System *sys, QgsFeature *feature
     QgsGeometry * geo = feature->geometry();
     if (!geo)
         return 0;
-
     QgsPolygon pol= geo->asPolygon();
     if (geo->isMultipart()) {
         QgsMultiPolygon mPol = geo->asMultiPolygon();

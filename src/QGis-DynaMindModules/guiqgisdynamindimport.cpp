@@ -31,6 +31,8 @@ GUIQGisDynaMindImport::GUIQGisDynaMindImport(DM::Module * m, QWidget *parent) :
     bool append = m->getParameter<bool>("appendToStream");
     ui->checkBox_append->setChecked(append);
 
+    ui->lineEditCoorindateSystem->setText(QString::fromStdString(this->module->getParameterAsString("CoordinateSystem")));
+
 }
 
 GUIQGisDynaMindImport::~GUIQGisDynaMindImport()
@@ -60,6 +62,9 @@ void GUIQGisDynaMindImport::accept() {
     }
     std::string selectedLayer = ui->comboBox->currentText().toStdString();
     module->setLayer(selectedLayer);
+
+    long coorindateSystem = ui->lineEditCoorindateSystem->text().toLong();
+    module->setParameterNative<long>("CoordinateSystem", coorindateSystem);
 
     QDialog::accept();
     return;

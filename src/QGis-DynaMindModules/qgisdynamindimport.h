@@ -17,6 +17,7 @@ private:
         std::string currentLayer;
         std::string oldLayer;
         std::string dataname;
+        long coorindateSystem;
         bool isNode;
         bool isEdge;
         bool isFace;
