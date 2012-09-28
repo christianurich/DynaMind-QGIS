@@ -31,6 +31,10 @@ void QGISDynaMindExport::run() {
     DM::View * v = sys->getViewDefinition(dataname);
 
     QgsMapLayer * layer = QgsMapLayerRegistry::instance()->mapLayer(QString::fromStdString(this->qgisname));
+    if (!layer) {
+        Logger(Error) << "Layer " << qgisname << "doesn't exist";
+        return;
+    }
     QgsVectorLayer * vectorLayer= (QgsVectorLayer*) layer;
 
     for (int id = 0; id < vectorLayer->featureCount(); id++ ) {
