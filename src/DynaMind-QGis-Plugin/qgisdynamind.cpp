@@ -72,16 +72,18 @@ void QGisDynaMind::unload()
 
 void QGisDynaMind::startDynaMind()
 {
-    if (!dm) {
-        QSettings settingsDynaMind("IUT", "DYNAMIND");
-        QString rpath = settingsDynaMind.value("ROOTPATH").toString();
-        QStringList libs = QApplication::libraryPaths();
-        libs.push_back(rpath);
-        QString tmp_path = QDir::currentPath();
-        QDir::setCurrent(rpath);
-        dm =  new DynaMindMainWindow();
-        QDir::setCurrent(tmp_path);
-    }
+    if (dm)
+        delete dm;
+
+    QSettings settingsDynaMind("IUT", "DYNAMIND");
+    QString rpath = settingsDynaMind.value("ROOTPATH").toString();
+    QStringList libs = QApplication::libraryPaths();
+    libs.push_back(rpath);
+    QString tmp_path = QDir::currentPath();
+    QDir::setCurrent(rpath);
+    dm =  new DynaMindMainWindow();
+    QDir::setCurrent(tmp_path);
+
     qWarning("start DynaMind");
     dm->createMainWindow();
 }
